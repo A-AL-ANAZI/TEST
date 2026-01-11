@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Q-Text Ultimate</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: rgba(30, 41, 59, 0.95);
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.1);
+      --radius: 16px;
+    }
+
+    body.large-text-mode { font-size: 1.2rem; }
+    body.large-text-mode .question-text { font-size: 1.6rem; }
+    body.large-text-mode .option-btn { font-size: 1.2rem; padding: 20px; }
+
+    * { box-sizing: border-box; outline: none; }
+    
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #172554, #0f172a);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      transition: font-size 0.3s;
+    }
+
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: -1;
+      opacity: 0.25;
+    }
+    .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--primary); }
+    .orb-2 { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: #06b6d4; }
+
+    .container {
+      width: 100%;
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 15px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 12px 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    h1 { margin: 0; font-size: 1.6rem; font-weight: 800; color: #fff; letter-spacing: -1px; }
+    
+    .nav-group { display: flex; gap: 5px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 20px; }
+    .nav-btn {
+      background: transparent; border: none; color: var(--text-muted);
+      padding: 6px 14px; border-radius: 16px; cursor: pointer; font-weight: 600;
+      transition: 0.3s;
+    }
+    .nav-btn.active { background: var(--primary); color: #fff; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 15px;
+      animation: fadeIn 0.3s ease-out;
+      position: relative;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .hidden { display: none !important; }
+
+    input[type="text"], textarea {
+      width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+      padding: 14px; border-radius: 12px; color: #fff; font-size: 1rem;
+      margin-bottom: 15px; font-family: inherit; transition: 0.3s;
+    }
+    input:focus, textarea:focus { border-color: var(--primary); background: rgba(0,0,0,0.5); }
+    .auto-dir { unicode-bidi: plaintext; text-align: start; direction: auto; }
+
+    .settings-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 15px 0;
+    }
+    .setting-item {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      padding: 10px; border-radius: 12px; display: flex; align-items: center; gap: 8px;
+      cursor: pointer; transition: 0.2s; user-select: none; font-size: 0.9rem; justify-content: center; flex-wrap: wrap;
+    }
+    .setting-item:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
+    .setting-item input[type="checkbox"] { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer; }
+    
+    .num-input {
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff;
+      width: 50px; padding: 2px; border-radius: 6px; text-align: center;
+      font-size: 0.9rem; margin: 0 5px;
+    }
+    .num-input:disabled { opacity: 0.3; }
+
+    .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap:10px; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
+    .btn-primary:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .upload-box { border: 2px dashed var(--border); padding: 30px; text-align: center; border-radius: var(--radius); cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.02); }
+    .upload-box:hover { border-color: var(--primary); background: rgba(255,255,255,0.05); }
+
+    /* Quiz Header Stats */
+    .quiz-stats {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 15px; font-weight: bold; color: var(--text-muted);
+      background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px;
+    }
+    .stat-box { display: flex; align-items: center; gap: 6px; }
+    .timer-badge { background: rgba(59, 130, 246, 0.2); color: #60a5fa; padding: 2px 8px; border-radius: 6px; font-family: monospace; font-size: 1.1em; }
+    .global-timer-badge { background: rgba(245, 158, 11, 0.2); color: #fbbf24; padding: 2px 8px; border-radius: 6px; font-family: monospace; font-size: 1.1em; }
+
+    .question-text { font-size: 1.3rem; line-height: 1.6; margin-bottom: 20px; font-weight: 700; }
+    .options-container { display: grid; gap: 10px; max-height: 60vh; overflow-y: auto; padding-right: 5px; }
+    
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.5); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+    .option-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      padding: 16px; border-radius: 12px; color: var(--text-main); font-size: 1rem;
+      cursor: pointer; transition: 0.2s; width: 100%; text-align: start; line-height: 1.4;
+    }
+    .option-btn:hover:not(:disabled) { background: rgba(59, 130, 246, 0.2); border-color: var(--primary); }
+    .option-btn.correct { border-color: var(--success); background: rgba(16, 185, 129, 0.2); }
+    .option-btn.wrong { border-color: var(--danger); background: rgba(239, 68, 68, 0.2); }
+
+    .list-item {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      padding: 10px; margin-bottom: 8px; border-radius: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <div class="container">
+    <header>
+      <h1>Q-Text</h1>
+      <div style="display:flex; gap:10px">
+        <div class="nav-group">
+          <button class="nav-btn active" id="btnPlay" onclick="setMode('play')">تشغيل</button>
+          <button class="nav-btn" id="btnBuild" onclick="setMode('build')">بناء</button>
+        </div>
+        <div class="nav-group">
+          <button class="nav-btn" onclick="toggleLang()" id="langBtn" style="min-width:50px">En</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="playMode">
+      <div id="setupCard" class="card">
+        <h2 data-i18n="setup" style="margin-top:0">إعداد الاختبار</h2>
+        
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+          <span style="font-size:2rem">📂</span>
+          <div data-i18n="upload" style="font-weight:bold; margin-top:10px">اختر ملفات TXT</div>
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-top:5px" data-i18n="unlimited">يدعم خيارات وأسئلة غير محدودة</div>
+        </div>
+        <input type="file" id="fileInput" accept=".txt" multiple hidden onchange="loadFiles(this.files)">
+        <p id="statusMsg" style="text-align:center; min-height:20px; color:var(--success); font-weight:bold"></p>
+
+        <div class="settings-grid">
+          <label class="setting-item">
+            <input type="checkbox" id="optTimer" onchange="toggleInput('optTimer', 'timerVal')"> 
+            <span data-i18n="qTimer">وقت السؤال</span>
+            <input type="number" id="timerVal" class="num-input" value="30" min="5" disabled>
+            <span style="font-size:0.75rem" data-i18n="sec">ث</span>
+          </label>
+          
+          <label class="setting-item">
+            <input type="checkbox" id="optGlobalTimer" onchange="toggleInput('optGlobalTimer', 'globalVal')"> 
+            <span data-i18n="gTimer">وقت كلي</span>
+            <input type="number" id="globalVal" class="num-input" value="10" min="1" disabled>
+            <span style="font-size:0.75rem" data-i18n="min">د</span>
+          </label>
+
+          <label class="setting-item"><input type="checkbox" id="optRandom" checked> <span data-i18n="random">خلط</span></label>
+          <label class="setting-item"><input type="checkbox" id="optReveal" checked> <span data-i18n="reveal">كشف الإجابة</span></label>
+          <label class="setting-item"><input type="checkbox" id="optLargeText" onchange="toggleTextSize()"> <span data-i18n="largeText">خط كبير</span></label>
+          <label class="setting-item"><input type="checkbox" id="optSound" checked> <span>🔊</span></label>
+        </div>
+
+        <button class="btn btn-primary" id="startBtn" disabled onclick="initQuiz('full')">
+          <span data-i18n="start">ابدأ الاختبار</span> 🚀
+        </button>
+      </div>
+
+      <div id="quizCard" class="card hidden">
+        <div class="quiz-stats">
+          <span id="qCount">0/0</span>
+          
+          <div class="stat-box hidden" id="globalTimerBox">
+             ⏱️ <span id="globalTimerDisplay" class="global-timer-badge">00:00</span>
+          </div>
+          
+          <div class="stat-box hidden" id="qTimerBox">
+             ⏳ <span id="timerDisplay" class="timer-badge">30</span>
+          </div>
+
+          <span id="scoreDisplay" style="color:var(--success)">0</span>
+        </div>
+        
+        <div class="question-text auto-dir" id="qText"></div>
+        <div class="options-container custom-scroll" id="optsBox"></div>
+        <div id="feedback" style="text-align:center; margin-top:15px; font-weight:bold; min-height:25px;"></div>
+      </div>
+
+      <div id="resCard" class="card hidden">
+        <h2 style="text-align:center" data-i18n="done">انتهى الاختبار</h2>
+        <div style="font-size:4rem; text-align:center; font-weight:900; color:var(--primary)" id="finalScore">0%</div>
+        
+        <div style="display:grid; gap:10px; margin-top:20px;">
+          <button class="btn btn-primary" style="background:var(--success)" id="dlPlayableBtn" disabled onclick="downloadPlayableMistakes()">
+            💾 <span data-i18n="dlPlayable">تحميل ملف (الأخطاء فقط)</span>
+          </button>
+
+          <button class="btn btn-primary" style="background:var(--warn)" id="retryWrongBtn" disabled onclick="initQuiz('mistakes')">
+            ⚠️ <span data-i18n="retryMistakes">إعادة (الأخطاء فقط)</span>
+          </button>
+          
+          <div style="display:flex; gap:10px">
+            <button class="btn btn-primary" style="background:rgba(255,255,255,0.1); border:1px solid var(--border)" id="dlBtn" disabled onclick="downloadReport()">
+              📄 <span data-i18n="dlReport">تقرير نصي</span>
+            </button>
+            <button class="btn btn-primary" onclick="backToMenu()">
+              🔄 <span data-i18n="restart">اختبار جديد</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <main id="buildMode" class="hidden">
+      <div class="card">
+        <h2 data-i18n="builder" style="margin-top:0">بناء الأسئلة</h2>
+        
+        <label style="color:var(--text-muted); display:block; margin-bottom:5px" data-i18n="lblQ">نص السؤال</label>
+        <input type="text" id="bQ" class="auto-dir">
+
+        <label style="color:var(--text-muted); display:block; margin-bottom:5px" data-i18n="lblC">الإجابة الصحيحة</label>
+        <input type="text" id="bC" class="auto-dir" style="border-color:var(--success)">
+
+        <label style="color:var(--text-muted); display:block; margin-bottom:5px">
+          <span data-i18n="lblW">الخيارات الخاطئة</span> 
+          <span style="font-size:0.8em; opacity:0.7">(واحد لكل سطر)</span>
+        </label>
+        <textarea id="bW" class="auto-dir" rows="5" style="border-color:var(--danger)"></textarea>
+
+        <button class="btn btn-primary" onclick="addToBuild()">➕ <span data-i18n="add">إضافة</span></button>
+      </div>
+
+      <div class="card" id="buildListCard" style="display:none">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px">
+          <h3 style="margin:0" data-i18n="added">القائمة</h3>
+          <span id="bCount" style="background:var(--primary); padding:2px 10px; border-radius:10px">0</span>
+        </div>
+        <div id="bList" style="max-height:300px; overflow-y:auto"></div>
+        <button class="btn btn-primary" style="background:var(--success); margin-top:10px" onclick="saveFile()">
+          💾 <span data-i18n="save">حفظ الملف (TXT)</span>
+        </button>
+      </div>
+    </main>
+  </div>
+
+<script>
+/* --- CONFIG & TRANSLATIONS --- */
+const texts = {
+  ar: {
+    setup: "إعداد الاختبار", upload: "اضغط لرفع الملفات", unlimited: "خيارات وأسئلة غير محدودة",
+    random: "خلط", qTimer: "وقت السؤال", gTimer: "وقت كلي", sec: "ث", min: "د",
+    start: "ابدأ الاختبار", done: "انتهى!", dlPlayable: "تحميل ملف للعب (الأخطاء)", 
+    retryMistakes: "إعادة الأخطاء فوراً", dlReport: "تقرير نصي", restart: "اختبار جديد",
+    builder: "صانع الأسئلة", lblQ: "السؤال", lblC: "الإجابة الصحيحة", lblW: "الخيارات الخاطئة", 
+    add: "إضافة", added: "تمت الإضافة", save: "حفظ الملف", correct: "إجابة صحيحة!", 
+    wrong: "خطأ!", err: "أكمل البيانات", reveal: "كشف الإجابة", largeText: "خط كبير"
+  },
+  en: {
+    setup: "Quiz Setup", upload: "Upload TXT Files", unlimited: "Unlimited items supported",
+    random: "Shuffle", qTimer: "Q-Timer", gTimer: "Total Timer", sec: "s", min: "m",
+    start: "Start Quiz", done: "Finished!", dlPlayable: "Download Playable (Mistakes)",
+    retryMistakes: "Retry Mistakes Now", dlReport: "Text Report", restart: "New Quiz",
+    builder: "Quiz Builder", lblQ: "Question", lblC: "Correct Answer", lblW: "Wrong Answers", 
+    add: "Add", added: "Added", save: "Save TXT", correct: "Correct!", wrong: "Wrong!", 
+    err: "Incomplete fields", reveal: "Reveal Answer", largeText: "Large Text"
+  }
+};
+
+let lang = 'ar';
+let masterQuestions = [];
+let activeQuestions = [];
+let buildData = [];
+let state = { idx:0, score:0, wrongs:[], timer:null, globalTimer:null, globalEndTime:0 };
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+/* --- UI FUNCTIONS --- */
+function setMode(m) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if(m==='play') document.getElementById('btnPlay').classList.add('active');
+  else document.getElementById('btnBuild').classList.add('active');
+  document.getElementById('playMode').classList.toggle('hidden', m !== 'play');
+  document.getElementById('buildMode').classList.toggle('hidden', m !== 'build');
+}
+
+function toggleLang() {
+  lang = lang === 'ar' ? 'en' : 'ar';
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('langBtn').textContent = lang === 'ar' ? 'En' : 'عربي';
+  updateTxt();
+}
+
+function updateTxt() {
+  document.querySelectorAll('[data-i18n]').forEach(e => {
+    e.textContent = texts[lang][e.dataset.i18n];
+  });
+}
+
+function toggleInput(chkId, inpId) {
+  const chk = document.getElementById(chkId);
+  const inp = document.getElementById(inpId);
+  inp.disabled = !chk.checked;
+  if(chk.checked) inp.focus();
+}
+
+function toggleTextSize() {
+  document.body.classList.toggle('large-text-mode', document.getElementById('optLargeText').checked);
+}
+
+function backToMenu() {
+  document.getElementById('resCard').classList.add('hidden');
+  document.getElementById('setupCard').classList.remove('hidden');
+}
+
+/* --- PLAY LOGIC --- */
+function loadFiles(files) {
+  if(!files.length) return;
+  Promise.all(Array.from(files).map(f => f.text())).then(contents => {
+    masterQuestions = [];
+    contents.forEach(txt => {
+      txt.split(/\n\s*---\s*\n/).forEach(blk => {
+        const qM = blk.match(/\$(.*?)\$/s);
+        if(qM) {
+          const allOpts = [...blk.matchAll(/(\${2,3})(.*?)\1/gs)];
+          let c = "";
+          const opts = allOpts.map(m => {
+            const t = m[2].trim();
+            if(m[1].length===3) c=t;
+            return t;
+          }).filter(Boolean);
+          if(c && opts.length) masterQuestions.push({q:qM[1].trim(), opts, c});
+        }
+      });
+    });
+    document.getElementById('statusMsg').textContent = `${masterQuestions.length} Questions ✅`;
+    document.getElementById('startBtn').disabled = !masterQuestions.length;
+  });
+}
+
+function initQuiz(type) {
+  if(type === 'full') {
+    activeQuestions = JSON.parse(JSON.stringify(masterQuestions));
+  } else if(type === 'mistakes') {
+    activeQuestions = state.wrongs.map(w => w.fullObj);
+  }
+
+  if(document.getElementById('optRandom').checked) {
+    activeQuestions.sort(()=>Math.random()-.5);
+    activeQuestions.forEach(q=>q.opts.sort(()=>Math.random()-.5));
+  }
+
+  state = { idx:0, score:0, wrongs:[], timer:null, globalTimer:null };
+  
+  // Setup Global Timer
+  const gTimerEnabled = document.getElementById('optGlobalTimer').checked;
+  document.getElementById('globalTimerBox').classList.toggle('hidden', !gTimerEnabled);
+  if(gTimerEnabled) {
+    const mins = parseInt(document.getElementById('globalVal').value) || 10;
+    state.globalEndTime = Date.now() + (mins * 60 * 1000);
+    state.globalTimer = setInterval(checkGlobalTimer, 1000);
+    checkGlobalTimer(); // update immediately
+  }
+
+  document.getElementById('setupCard').classList.add('hidden');
+  document.getElementById('resCard').classList.add('hidden');
+  document.getElementById('quizCard').classList.remove('hidden');
+  renderQ();
+}
+
+function checkGlobalTimer() {
+  const left = state.globalEndTime - Date.now();
+  if(left <= 0) {
+    clearInterval(state.globalTimer);
+    finish();
+    return;
+  }
+  const m = Math.floor(left / 60000);
+  const s = Math.floor((left % 60000) / 1000);
+  document.getElementById('globalTimerDisplay').textContent = 
+    `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+
+function renderQ() {
+  const q = activeQuestions[state.idx];
+  document.getElementById('qCount').textContent = `${state.idx+1}/${activeQuestions.length}`;
+  document.getElementById('scoreDisplay').textContent = state.score;
+  document.getElementById('qText').textContent = q.q;
+  
+  const box = document.getElementById('optsBox');
+  box.innerHTML = '';
+  q.opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn auto-dir';
+    btn.textContent = opt;
+    btn.onclick = () => checkAns(opt, btn);
+    box.appendChild(btn);
+  });
+  
+  document.getElementById('feedback').innerHTML = '';
+  
+  // Setup Question Timer
+  const qTimerEnabled = document.getElementById('optTimer').checked;
+  document.getElementById('qTimerBox').classList.toggle('hidden', !qTimerEnabled);
+  if(qTimerEnabled) runQTimer();
+}
+
+function runQTimer() {
+  clearInterval(state.timer);
+  let maxTime = parseInt(document.getElementById('timerVal').value) || 30;
+  let t = maxTime;
+  const el = document.getElementById('timerDisplay');
+  el.textContent = t;
+  state.timer = setInterval(() => {
+    t--; el.textContent = t;
+    if(t<=0) checkAns(null, null);
+  }, 1000);
+}
+
+function checkAns(ans, btn) {
+  clearInterval(state.timer);
+  const q = activeQuestions[state.idx];
+  const reveal = document.getElementById('optReveal').checked;
+  
+  document.querySelectorAll('.option-btn').forEach(b => b.disabled=true);
+
+  if(ans === q.c) {
+    if(btn) btn.classList.add('correct');
+    state.score++;
+    beep(1);
+    if(reveal) document.getElementById('feedback').innerHTML = `<span style="color:var(--success)">${texts[lang].correct}</span>`;
+  } else {
+    if(btn) btn.classList.add('wrong');
+    state.wrongs.push({ q:q.q, my:ans||"TimeOut", ok:q.c, fullObj: q });
+    beep(0);
+    
+    if(reveal) {
+      document.getElementById('feedback').innerHTML = `<span style="color:var(--danger)">${texts[lang].wrong}</span>`;
+      document.querySelectorAll('.option-btn').forEach(b => { if(b.textContent===q.c) b.classList.add('correct'); });
+    } else {
+      document.getElementById('feedback').innerHTML = `<span style="color:var(--danger)">${texts[lang].wrong}</span>`;
+    }
+  }
+
+  setTimeout(() => {
+    state.idx++;
+    if(state.idx < activeQuestions.length) renderQ();
+    else finish();
+  }, 1500);
+}
+
+function finish() {
+  clearInterval(state.timer);
+  clearInterval(state.globalTimer);
+  
+  document.getElementById('quizCard').classList.add('hidden');
+  document.getElementById('resCard').classList.remove('hidden');
+  document.getElementById('finalScore').textContent = Math.round((state.score/activeQuestions.length)*100)+'%';
+  
+  const hasWrongs = state.wrongs.length > 0;
+  document.getElementById('dlBtn').disabled = !hasWrongs;
+  document.getElementById('retryWrongBtn').disabled = !hasWrongs;
+  document.getElementById('dlPlayableBtn').disabled = !hasWrongs;
+}
+
+// Download Human Readable
+function downloadReport() {
+  const txt = state.wrongs.map((w,i)=> `Q${i+1}: ${w.q}\nMy Answer: ${w.my}\nCorrect: ${w.ok}\n---`).join('\n');
+  saveTxt(txt, 'Report.txt');
+}
+
+// Download Machine Readable (For re-play)
+function downloadPlayableMistakes() {
+  // Reconstruct standard format: $Q$ \n $$$C$$$ \n $$W$$ ...
+  const txt = state.wrongs.map(w => {
+    let block = `$${w.fullObj.q}$\n`;
+    block += `$$$${w.fullObj.c}$$$\n`;
+    w.fullObj.opts.forEach(opt => {
+      if(opt !== w.fullObj.c) block += `$$${opt}$$\n`;
+    });
+    return block + '---';
+  }).join('\n\n');
+  saveTxt(txt, 'Playable_Mistakes.txt');
+}
+
+/* --- BUILDER --- */
+function addToBuild() {
+  const q = document.getElementById('bQ').value.trim();
+  const c = document.getElementById('bC').value.trim();
+  const w = document.getElementById('bW').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!q || !c || !w.length) return alert(texts[lang].err);
+
+  buildData.push({q,c,w});
+  document.getElementById('bQ').value=''; 
+  document.getElementById('bC').value=''; 
+  document.getElementById('bW').value='';
+  renderBuildList();
+}
+
+function renderBuildList() {
+  const card = document.getElementById('buildListCard');
+  const list = document.getElementById('bList');
+  document.getElementById('bCount').textContent = buildData.length;
+  card.style.display = buildData.length ? 'block' : 'none';
+  
+  list.innerHTML = buildData.map((item,i) => `
+    <div class="list-item">
+      <div style="overflow:hidden">
+        <div style="font-weight:bold">${i+1}. ${item.q}</div>
+        <div style="font-size:0.8rem; color:var(--text-muted)">${item.w.length} Wrongs</div>
+      </div>
+      <button style="color:var(--danger); background:none; border:none; cursor:pointer" onclick="buildData.splice(${i},1);renderBuildList()">✕</button>
+    </div>
+  `).join('');
+}
+
+function saveFile() {
+  const txt = buildData.map(d => {
+    let blk = `$${d.q}$\n$$$${d.c}$$$\n`;
+    d.w.forEach(wrong => blk += `$$${wrong}$$\n`);
+    return blk + '---';
+  }).join('\n\n');
+  saveTxt(txt, 'my_quiz.txt');
+}
+
+/* --- HELPERS --- */
+function saveTxt(content, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type:'text/plain'}));
+  a.download = name; a.click();
+}
+
+function beep(type) {
+  if(!document.getElementById('optSound').checked) return;
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.connect(g); g.connect(audioCtx.destination);
+  if(type) { osc.frequency.value=600; osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime+.1); }
+  else { osc.type='sawtooth'; osc.frequency.value=150; osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime+.2); }
+  g.gain.value=0.1; g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+.2);
+  osc.start(); osc.stop(audioCtx.currentTime+.2);
+}
+
+// Init
+updateTxt();
+</script>
+</body>
+</html>
