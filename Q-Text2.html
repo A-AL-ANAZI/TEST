@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Q-Text Ultimate - Offline Flashcards</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: rgba(30, 41, 59, 0.95);
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.1);
+      --radius: 16px;
+    }
+
+    body.large-text-mode { font-size: 1.2rem; }
+    body.large-text-mode .question-text, 
+    body.large-text-mode .card-content { font-size: 1.8rem; }
+
+    * { box-sizing: border-box; outline: none; }
+    
+    body {
+      margin: 0;
+      font-family: sans-serif; /* خطوط النظام لضمان العمل بدون إنترنت */
+      background: #0f172a;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 15px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 12px 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+    
+    .nav-group { display: flex; gap: 5px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 20px; }
+    .nav-btn {
+      background: transparent; border: none; color: var(--text-muted);
+      padding: 6px 14px; border-radius: 16px; cursor: pointer; font-weight: 600;
+      transition: 0.3s;
+    }
+    .nav-btn.active { background: var(--primary); color: #fff; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 15px;
+      position: relative;
+    }
+    .hidden { display: none !important; }
+
+    /* Flashcard Style */
+    .flashcard-container {
+      perspective: 1000px;
+      width: 100%;
+      height: 350px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+    .flashcard-container.is-flipped .flashcard-inner {
+      transform: rotateY(180deg);
+    }
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      border-radius: var(--radius);
+      border: 2px solid var(--primary);
+      font-size: 1.5rem;
+      font-weight: bold;
+      background: var(--bg-card);
+      overflow-y: auto;
+    }
+    .card-back {
+      transform: rotateY(180deg);
+      color: var(--success);
+      border-color: var(--success);
+    }
+
+    .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap:10px; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .upload-box { border: 2px dashed var(--border); padding: 30px; text-align: center; border-radius: var(--radius); cursor: pointer; background: rgba(255,255,255,0.02); }
+    
+    .option-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      padding: 16px; border-radius: 12px; color: var(--text-main); width: 100%; text-align: start; margin-bottom: 8px; cursor: pointer;
+    }
+    .option-btn.correct { border-color: var(--success); background: rgba(16, 185, 129, 0.2); }
+    .option-btn.wrong { border-color: var(--danger); background: rgba(239, 68, 68, 0.2); }
+
+    .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 15px 0; }
+    .setting-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+    
+    input[type="text"], textarea { width: 100%; background: #000; border: 1px solid var(--border); padding: 12px; color: #fff; border-radius: 8px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h2 style="margin:0">Q-Text</h2>
+      <div class="nav-group">
+        <button class="nav-btn active" id="mode-play" onclick="setAppMode('play')">اختبار</button>
+        <button class="nav-btn" id="mode-cards" onclick="setAppMode('cards')">بطاقات</button>
+        <button class="nav-btn" id="mode-build" onclick="setAppMode('build')">بناء</button>
+      </div>
+    </header>
+
+    <div id="setup-view" class="card">
+      <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+        <span style="font-size:2rem">📂</span>
+        <p>اختر ملفات TXT لبدء الدراسة</p>
+      </div>
+      <input type="file" id="fileInput" accept=".txt" multiple hidden onchange="handleFiles(this.files)">
+      <p id="fileStatus" style="text-align:center; color:var(--success); font-weight:bold"></p>
+
+      <div class="settings-grid">
+        <label class="setting-item"><input type="checkbox" id="optRandom" checked> خلط الأسئلة</label>
+        <label class="setting-item"><input type="checkbox" id="optLarge" onchange="document.body.classList.toggle('large-text-mode')"> خط كبير</label>
+      </div>
+
+      <button class="btn btn-primary" id="startBtn" disabled onclick="startSession()">ابدأ الآن 🚀</button>
+    </div>
+
+    <div id="quiz-view" class="card hidden">
+      <div id="qCount" style="margin-bottom:10px; color:var(--text-muted)"></div>
+      <div id="qText" class="question-text" style="font-size:1.3rem; margin-bottom:20px; font-weight:bold"></div>
+      <div id="optionsBox"></div>
+      <div id="feedback" style="margin-top:15px; text-align:center; font-weight:bold; height:20px"></div>
+    </div>
+
+    <div id="cards-view" class="hidden">
+      <div class="flashcard-container" onclick="this.classList.toggle('is-flipped')">
+        <div class="flashcard-inner">
+          <div class="card-front" id="fFront">السؤال</div>
+          <div class="card-back" id="fBack">الإجابة</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px">
+        <button class="btn btn-primary" onclick="nextCard()">السؤال التالي ➡️</button>
+        <button class="btn" style="background:rgba(255,255,255,0.1)" onclick="resetSession()">إغلاق</button>
+      </div>
+    </div>
+
+    <div id="build-view" class="card hidden">
+      <h3>صانع الأسئلة</h3>
+      <input type="text" id="bQ" placeholder="السؤال">
+      <input type="text" id="bC" placeholder="الإجابة الصحيحة" style="border-color:var(--success)">
+      <textarea id="bW" placeholder="الخيارات الخاطئة (خيار في كل سطر)" rows="4"></textarea>
+      <button class="btn btn-primary" onclick="addQuestion()">إضافة للقائمة</button>
+      <div id="bList" style="margin-top:20px; max-height:200px; overflow-y:auto"></div>
+      <button class="btn" style="margin-top:10px; background:var(--success)" onclick="downloadBuiltFile()">حفظ الملف TXT</button>
+    </div>
+  </div>
+
+<script>
+let masterData = [];
+let currentQuestions = [];
+let currentIndex = 0;
+let appMode = 'play'; // play, cards, build
+let builtQuestions = [];
+
+function setAppMode(m) {
+  appMode = m;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mode-' + m).classList.add('active');
+  
+  document.getElementById('setup-view').classList.toggle('hidden', m === 'build');
+  document.getElementById('quiz-view').classList.add('hidden');
+  document.getElementById('cards-view').classList.add('hidden');
+  document.getElementById('build-view').classList.toggle('hidden', m !== 'build');
+}
+
+function handleFiles(files) {
+  masterData = [];
+  Promise.all(Array.from(files).map(f => f.text())).then(texts => {
+    texts.forEach(txt => {
+      txt.split(/\n\s*---\s*\n/).forEach(block => {
+        const qMatch = block.match(/\$(.*?)\$/s);
+        if(qMatch) {
+          const options = [...block.matchAll(/(\${2,3})(.*?)\1/gs)];
+          let correct = "";
+          const opts = options.map(m => {
+            const val = m[2].trim();
+            if(m[1].length === 3) correct = val;
+            return val;
+          }).filter(Boolean);
+          if(correct) masterData.push({q: qMatch[1].trim(), c: correct, opts: opts});
+        }
+      });
+    });
+    document.getElementById('fileStatus').textContent = `تم تحميل ${masterData.length} سؤال ✅`;
+    document.getElementById('startBtn').disabled = masterData.length === 0;
+  });
+}
+
+function startSession() {
+  currentQuestions = JSON.parse(JSON.stringify(masterData));
+  if(document.getElementById('optRandom').checked) {
+    currentQuestions.sort(() => Math.random() - 0.5);
+  }
+  
+  currentIndex = 0;
+  document.getElementById('setup-view').classList.add('hidden');
+  
+  if(appMode === 'play') {
+    document.getElementById('quiz-view').classList.remove('hidden');
+    renderQuiz();
+  } else {
+    document.getElementById('cards-view').classList.remove('hidden');
+    renderCard();
+  }
+}
+
+// منطق الاختبار (Play)
+function renderQuiz() {
+  const q = currentQuestions[currentIndex];
+  document.getElementById('qCount').textContent = `سؤال ${currentIndex + 1} من ${currentQuestions.length}`;
+  document.getElementById('qText').textContent = q.q;
+  const box = document.getElementById('optionsBox');
+  box.innerHTML = '';
+  
+  const shuffledOpts = [...q.opts].sort(() => Math.random() - 0.5);
+  shuffledOpts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+      if(opt === q.c) {
+        btn.classList.add('correct');
+      } else {
+        btn.classList.add('wrong');
+        document.querySelectorAll('.option-btn').forEach(b => { if(b.textContent === q.c) b.classList.add('correct'); });
+      }
+      setTimeout(() => {
+        currentIndex++;
+        if(currentIndex < currentQuestions.length) renderQuiz();
+        else resetSession();
+      }, 1500);
+    };
+    box.appendChild(btn);
+  });
+}
+
+// منطق البطاقات (Cards)
+function renderCard() {
+  const q = currentQuestions[currentIndex];
+  document.querySelector('.flashcard-container').classList.remove('is-flipped');
+  document.getElementById('fFront').textContent = q.q;
+  document.getElementById('fBack').textContent = q.c;
+}
+
+function nextCard() {
+  currentIndex++;
+  if(currentIndex < currentQuestions.length) {
+    renderCard();
+  } else {
+    alert("انتهت الأسئلة! سيتم إعادة الترتيب.");
+    startSession();
+  }
+}
+
+function resetSession() {
+  document.getElementById('quiz-view').classList.add('hidden');
+  document.getElementById('cards-view').classList.add('hidden');
+  document.getElementById('setup-view').classList.remove('hidden');
+}
+
+// صانع الأسئلة (Build)
+function addQuestion() {
+  const q = document.getElementById('bQ').value.trim();
+  const c = document.getElementById('bC').value.trim();
+  const w = document.getElementById('bW').value.split('\n').filter(s => s.trim());
+  if(!q || !c) return alert("أكمل البيانات");
+  
+  builtQuestions.push({q, c, w});
+  document.getElementById('bQ').value = '';
+  document.getElementById('bC').value = '';
+  document.getElementById('bW').value = '';
+  
+  const item = document.createElement('div');
+  item.textContent = q;
+  item.style.fontSize = '0.8rem';
+  item.style.padding = '5px';
+  document.getElementById('bList').appendChild(item);
+}
+
+function downloadBuiltFile() {
+  let content = builtQuestions.map(d => `$${d.q}$\n$$$${d.c}$$$\n${d.w.map(o => `$$${o}$$`).join('\n')}`).join('\n\n---\n\n');
+  const blob = new Blob([content], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = "my_questions.txt";
+  a.click();
+}
+</script>
+</body>
+</html>
