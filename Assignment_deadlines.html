@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة المهام الجامعية</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        /* المتغيرات للألوان (الوضع المضيء) */
+        :root {
+            --bg-color: #f3f4f6;
+            --text-main: #1f2937;
+            --text-secondary: #6b7280;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --safe: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --expired: #9ca3af;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            --transition: all 0.3s ease;
+        }
+
+        /* المتغيرات للألوان (الوضع الليلي) */
+        [data-theme="dark"] {
+            --bg-color: #111827;
+            --text-main: #f9fafb;
+            --text-secondary: #9ca3af;
+            --card-bg: #1f2937;
+            --border-color: #374151;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            transition: var(--transition);
+        }
+
+        .en-text {
+            font-family: 'Poppins', sans-serif;
+            direction: ltr;
+            display: inline-block;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: var(--transition);
+        }
+
+        .header-content {
+            max-width: 1100px;
+            margin: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title h1 { margin: 0; font-size: 1.8em; font-weight: 800; color: var(--primary); }
+        .header-title p { margin: 5px 0 0 0; color: var(--text-secondary); font-size: 0.95em; }
+
+        .actions-group { display: flex; gap: 10px; align-items: center; }
+
+        .btn {
+            display: flex; align-items: center; gap: 8px; padding: 10px 15px;
+            border: none; border-radius: 8px; font-family: 'Tajawal', sans-serif;
+            font-weight: 600; font-size: 0.9em; cursor: pointer; transition: var(--transition); color: white;
+        }
+
+        .btn-pdf { background-color: #ef4444; }
+        .btn-pdf:hover { background-color: #dc2626; }
+        
+        .btn-image { background-color: var(--primary); }
+        .btn-image:hover { background-color: var(--primary-hover); }
+
+        .theme-toggle {
+            background: var(--bg-color); border: 1px solid var(--border-color);
+            font-size: 1.2em; color: var(--text-secondary); cursor: pointer;
+            transition: var(--transition); width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .theme-toggle:hover { color: var(--primary); border-color: var(--primary); }
+
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+
+        .week-group { margin-bottom: 50px; animation: fadeIn 0.8s ease-out; }
+
+        .week-title {
+            display: flex; align-items: center; gap: 10px; font-size: 1.3em;
+            font-weight: 700; color: var(--text-main); margin-bottom: 20px;
+            padding-bottom: 10px; border-bottom: 2px solid var(--border-color);
+        }
+
+        .week-title i { color: var(--primary); }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+
+        .card {
+            background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow);
+            transition: var(--transition); position: relative; overflow: hidden;
+            display: flex; flex-direction: column; border: 1px solid var(--border-color);
+        }
+
+        .card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .card-status-bar { height: 6px; width: 100%; }
+        .card-body { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
+
+        .task-type {
+            display: flex; align-items: center; gap: 8px; font-size: 0.85em;
+            font-weight: 700; margin-bottom: 10px; text-transform: uppercase;
+        }
+
+        .course-name { font-size: 1.15em; font-weight: 800; margin-bottom: 15px; color: var(--text-main); line-height: 1.4; }
+
+        .deadline-info {
+            background-color: var(--bg-color); padding: 15px; border-radius: 10px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; margin-top: auto;
+        }
+
+        .deadline-info div { display: flex; flex-direction: column; gap: 5px; }
+        .deadline-info span { font-size: 0.85em; color: var(--text-secondary); font-weight: 500; }
+        .deadline-info strong { font-size: 1em; color: var(--text-main); }
+
+        .badge {
+            display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+            border-radius: 8px; font-weight: 700; font-size: 0.9em; width: fit-content;
+        }
+
+        .status-safe .card-status-bar { background-color: var(--safe); }
+        .status-safe .badge { background-color: rgba(16, 185, 129, 0.1); color: var(--safe); }
+
+        .status-warning .card-status-bar { background-color: var(--warning); }
+        .status-warning .badge { background-color: rgba(245, 158, 11, 0.1); color: var(--warning); }
+
+        .status-danger .card-status-bar { background-color: var(--danger); }
+        .status-danger .badge { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+        .status-expired { opacity: 0.6; filter: grayscale(50%); }
+        .status-expired .card-status-bar { background-color: var(--expired); }
+        .status-expired .badge { background-color: rgba(156, 163, 175, 0.1); color: var(--expired); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: 1fr; }
+            .header-content { flex-direction: column; text-align: center; }
+            .actions-group { justify-content: center; width: 100%; }
+        }
+
+        .exporting .actions-group { display: none !important; }
+    </style>
+</head>
+<body>
+
+<header id="main-header">
+    <div class="header-content">
+        <div class="header-title">
+            <h1>أكاديميتي 🎓</h1>
+            <p id="current-time">جاري تحميل الوقت...</p>
+        </div>
+        
+        <div class="actions-group">
+            <button class="btn btn-image" onclick="exportAsImage()" title="تحميل كصورة">
+                <i class="fas fa-image"></i> صورة
+            </button>
+            <button class="btn btn-pdf" onclick="exportAsPDF()" title="تحميل كملف PDF">
+                <i class="fas fa-file-pdf"></i> PDF
+            </button>
+            <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="تغيير المظهر">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="container" id="schedule-container">
+    </div>
+
+<script>
+    const tasks = [
+        { course: "IT-363: Network Management", task: "Discussion Board", date: "2026-02-23T23:59:00+03:00" },
+        { course: "IT-361: Web Technologies", task: "Discussion Board", date: "2026-02-24T23:59:00+03:00" },
+        { course: "IT-362: IT Project Management", task: "Discussion Board", date: "2026-02-25T23:59:00+03:00" },
+        { course: "IT-364: IT Entrepreneurship", task: "Discussion Board", date: "2026-02-26T23:59:00+03:00" },
+        { course: "IT-365: Enterprise Systems", task: "Discussion Board", date: "2026-03-01T12:00:00+03:00" },
+        { course: "IT-363: Network Management", task: "Assignment 1", date: "2026-03-01T23:59:00+03:00" },
+        { course: "IT-361: Web Technologies", task: "Assignment 1", date: "2026-03-02T23:59:00+03:00" },
+        { course: "IT-362: IT Project Management", task: "Assignment 1", date: "2026-03-03T23:59:00+03:00" },
+        { course: "IT-364: IT Entrepreneurship", task: "Assignment 1", date: "2026-03-04T23:59:00+03:00" },
+        { course: "IT-365: Enterprise Systems", task: "Assignment 1", date: "2026-03-05T23:59:00+03:00" },
+        { course: "IT-363: Network Management", task: "Assignment 2", date: "2026-04-26T23:59:00+03:00" },
+        { course: "IT-361: Web Technologies", task: "Assignment 2", date: "2026-04-27T23:59:00+03:00" },
+        { course: "IT-362: IT Project Management", task: "Assignment 2", date: "2026-04-28T23:59:00+03:00" },
+        { course: "IT-364: IT Entrepreneurship", task: "Assignment 2", date: "2026-04-29T23:59:00+03:00" },
+        { course: "IT-365: Enterprise Systems", task: "Assignment 2", date: "2026-04-30T23:59:00+03:00" },
+        { course: "IT-363: Network Management", task: "Project", date: "2026-05-03T23:59:00+03:00" },
+        { course: "IT-361: Web Technologies", task: "Project", date: "2026-05-04T23:59:00+03:00" },
+        { course: "IT-362: IT Project Management", task: "Project", date: "2026-05-05T23:59:00+03:00" },
+        { course: "IT-364: IT Entrepreneurship", task: "Project", date: "2026-05-06T23:59:00+03:00" },
+        { course: "IT-365: Enterprise Systems", task: "Project", date: "2026-05-07T23:59:00+03:00" }
+    ];
+
+    function getTaskDetails(taskName) {
+        if(taskName.includes("Discussion")) return { icon: "fa-comments", label: "مشاركة (مناقشة)", color: "#3b82f6" };
+        if(taskName.includes("Assignment")) return { icon: "fa-file-alt", label: "واجب دراسي", color: "#8b5cf6" };
+        if(taskName.includes("Project")) return { icon: "fa-rocket", label: "مشروع نهائي", color: "#ec4899" };
+        return { icon: "fa-tasks", label: taskName, color: "#6b7280" };
+    }
+
+    function renderTasks() {
+        const container = document.getElementById('schedule-container');
+        container.innerHTML = '';
+        const now = new Date();
+
+        const timeOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        document.getElementById('current-time').innerText = "تحديث: " + now.toLocaleDateString('ar-SA', timeOptions);
+
+        const groupedTasks = {};
+        
+        tasks.forEach(task => {
+            const taskDate = new Date(task.date);
+            let groupName = "مهام أخرى";
+            let groupIcon = "fa-calendar-week";
+            
+            if(taskDate.getMonth() === 1 || (taskDate.getMonth() === 2 && taskDate.getDate() === 1 && task.task.includes("Discussion"))) {
+                groupName = "لوحة المناقشات الأولى"; groupIcon = "fa-users";
+            }
+            else if(taskDate.getMonth() === 2) { groupName = "تسليم الواجب الأول"; groupIcon = "fa-book"; }
+            else if(taskDate.getMonth() === 3) { groupName = "تسليم الواجب الثاني"; groupIcon = "fa-book-open"; }
+            else if(taskDate.getMonth() === 4) { groupName = "المشاريع النهائية"; groupIcon = "fa-graduation-cap"; }
+
+            if (!groupedTasks[groupName]) { groupedTasks[groupName] = { tasks: [], icon: groupIcon }; }
+            groupedTasks[groupName].tasks.push(task);
+        });
+
+        for (const [group, data] of Object.entries(groupedTasks)) {
+            const weekDiv = document.createElement('div');
+            weekDiv.className = 'week-group';
+            
+            const weekTitle = document.createElement('div');
+            weekTitle.className = 'week-title';
+            weekTitle.innerHTML = `<i class="fas ${data.icon}"></i> ${group}`;
+            weekDiv.appendChild(weekTitle);
+
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+
+            data.tasks.forEach(task => {
+                const taskDate = new Date(task.date);
+                const diffTime = taskDate - now;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                const diffHours = Math.floor((diffTime / (1000 * 60 * 60)) % 24);
+
+                let statusClass = ''; let statusIcon = ''; let statusText = '';
+
+                if (diffTime < 0) {
+                    statusClass = 'status-expired'; statusIcon = 'fa-check-circle'; statusText = 'انتهى الموعد';
+                } else if (diffDays <= 3) {
+                    statusClass = 'status-danger'; statusIcon = 'fa-fire'; statusText = `عاجل: باقي ${diffDays} يوم و ${diffHours} س`;
+                } else if (diffDays <= 7) {
+                    statusClass = 'status-warning'; statusIcon = 'fa-hourglass-half'; statusText = `اقترب الموعد: باقي ${diffDays} أيام`;
+                } else {
+                    statusClass = 'status-safe'; statusIcon = 'fa-shield-alt'; statusText = `وقت كافي: باقي ${diffDays} يوم`;
+                }
+
+                const cardDateString = taskDate.toLocaleDateString('ar-SA', { month: 'long', day: 'numeric' });
+                const cardDayString = taskDate.toLocaleDateString('ar-SA', { weekday: 'long' });
+                const cardTimeString = taskDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const taskMeta = getTaskDetails(task.task);
+
+                const card = document.createElement('div');
+                card.className = `card ${statusClass}`;
+                card.innerHTML = `
+                    <div class="card-status-bar"></div>
+                    <div class="card-body">
+                        <div class="task-type" style="color: ${taskMeta.color}">
+                            <i class="fas ${taskMeta.icon}"></i> ${taskMeta.label}
+                        </div>
+                        <div class="course-name en-text">${task.course}</div>
+                        
+                        <div class="deadline-info">
+                            <div>
+                                <span><i class="far fa-calendar-alt"></i> ${cardDayString}</span>
+                                <strong class="en-text">${cardDateString}</strong>
+                            </div>
+                            <div style="text-align: left;">
+                                <span><i class="far fa-clock"></i> الوقت</span>
+                                <strong class="en-text">${cardTimeString}</strong>
+                            </div>
+                        </div>
+
+                        <div class="badge">
+                            <i class="fas ${statusIcon}"></i> ${statusText}
+                        </div>
+                    </div>
+                `;
+                gridDiv.appendChild(card);
+            });
+
+            weekDiv.appendChild(gridDiv);
+            container.appendChild(weekDiv);
+        }
+    }
+
+    const toggleBtn = document.getElementById('theme-toggle');
+    const icon = toggleBtn.querySelector('i');
+    
+    if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        icon.classList.replace('fa-moon', 'fa-sun');
+    }
+
+    function toggleTheme() {
+        if (document.documentElement.getAttribute('data-theme') === 'dark') {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+            icon.classList.replace('fa-sun', 'fa-moon');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            icon.classList.replace('fa-moon', 'fa-sun');
+        }
+    }
+
+    // --- وظائف التصدير (تم إصلاح الوضوح) --- //
+    
+    function exportAsImage() {
+        // التحويل الإجباري والمؤقت للوضع الفاتح لضمان القراءة 100%
+        const wasDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if(wasDark) document.documentElement.removeAttribute('data-theme');
+        
+        document.body.classList.add('exporting');
+        
+        // إعطاء المتصفح لحظة بسيطة لتطبيق الألوان الفاتحة قبل التصوير
+        setTimeout(() => {
+            html2canvas(document.body, { 
+                scale: 2, 
+                useCORS: true,
+                windowWidth: 1200,
+                backgroundColor: '#f3f4f6' // لون خلفية ثابت وفاتح
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'المهام_الجامعية.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                // إعادة الواجهة للوضع الليلي إذا كنت تستخدمه
+                document.body.classList.remove('exporting');
+                if(wasDark) document.documentElement.setAttribute('data-theme', 'dark');
+            });
+        }, 150);
+    }
+
+    function exportAsPDF() {
+        // التحويل الإجباري والمؤقت للوضع الفاتح
+        const wasDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if(wasDark) document.documentElement.removeAttribute('data-theme');
+        
+        document.body.classList.add('exporting');
+        
+        setTimeout(() => {
+            const element = document.body;
+            const opt = {
+                margin:       [10, 0, 10, 0],
+                filename:     'المهام_الجامعية.pdf',
+                image:        { type: 'jpeg', quality: 1 },
+                html2canvas:  { scale: 2, useCORS: true, windowWidth: 1200, backgroundColor: '#f3f4f6' }, 
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                // إعادة الواجهة للوضع الليلي إذا كنت تستخدمه
+                document.body.classList.remove('exporting');
+                if(wasDark) document.documentElement.setAttribute('data-theme', 'dark');
+            });
+        }, 150);
+    }
+
+    renderTasks();
+    setInterval(renderTasks, 60000);
+
+</script>
+</body>
+</html>
